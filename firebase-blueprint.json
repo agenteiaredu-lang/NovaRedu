@@ -1,0 +1,115 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Stores user-specific data and settings",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Unique user ID" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "level": { "type": "number" },
+        "xp": { "type": "number" },
+        "objective": { "type": "string", "enum": ["Perder grasa", "Ganar músculo", "Resistencia"] },
+        "steps": { "type": "number" },
+        "sleep": { "type": "string" },
+        "hydration": { "type": "number" },
+        "kcals": { "type": "number" },
+        "exerciseMinutes": { "type": "number" },
+        "standHours": { "type": "number" },
+        "weight": { "type": "number" },
+        "bodyFat": { "type": "number" },
+        "performanceScore": { "type": "number" },
+        "consistencyDays": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Routine": {
+      "title": "Routine",
+      "description": "Workout routine details",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "daysPerWeek": { "type": "number" },
+        "durationMinutes": { "type": "number" },
+        "progress": { "type": "number" },
+        "image": { "type": "string" },
+        "isFavorite": { "type": "boolean" },
+        "category": { "type": "string" }
+      }
+    },
+    "Activity": {
+      "title": "Activity",
+      "description": "User activity post in the community",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "authorName": { "type": "string" },
+        "authorPhoto": { "type": "string" },
+        "type": { "type": "string" },
+        "content": { "type": "string" },
+        "metrics": { "type": "object" },
+        "kudos": { "type": "number" },
+        "comments": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Gym": {
+      "title": "Gym",
+      "description": "Gym location and details",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "rating": { "type": "number" },
+        "reviews": { "type": "number" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "distance": { "type": "string" },
+        "price": { "type": "number" },
+        "image": { "type": "string" },
+        "location": { "type": { "$ref": "GeoPoint" } },
+        "address": { "type": "string" },
+        "city": { "type": "string" },
+        "isPremium": { "type": "boolean" }
+      }
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "User notification",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "type": { "type": "string", "enum": ["info", "success", "warning", "error"] },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "title", "message", "type", "read", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": "UserProfile",
+      "description": "User profiles"
+    },
+    "/activities/{activityId}": {
+      "schema": "Activity",
+      "description": "Community activity feed"
+    },
+    "/gyms/{gymId}": {
+      "schema": "Gym",
+      "description": "Gym locations"
+    },
+    "/users/{uid}/routines/{routineId}": {
+      "schema": "Routine",
+      "description": "User's workout routines"
+    },
+    "/notifications/{notificationId}": {
+      "schema": "Notification",
+      "description": "User notifications"
+    }
+  }
+}

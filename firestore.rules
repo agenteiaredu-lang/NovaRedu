@@ -1,0 +1,123 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {uid}
+    // Fields: uid, displayName, email, photoURL, level, xp, objective, createdAt
+    //
+    // Collection: activities
+    // Document ID: {activityId}
+    // Fields: uid, authorName, authorPhoto, type, content, metrics, kudos, comments, createdAt
+    //
+    // Collection: gyms
+    // Document ID: {gymId}
+    // Fields: name, rating, reviews, tags, distance, price, image, location, isPremium
+    //
+    // Collection: users/{uid}/routines
+    // Document ID: {routineId}
+    // Fields: id, name, daysPerWeek, durationMinutes, progress, image, isFavorite, category
+    //
+    // Collection: notifications
+    // Document ID: {notificationId}
+    // Fields: uid, title, message, type, read, createdAt
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "agenteiaredu@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email']) &&
+             data.uid is string &&
+             data.email is string &&
+             data.email.size() < 255;
+    }
+
+    function isValidActivity(data) {
+      return data.keys().hasAll(['uid', 'content', 'authorName']) &&
+             data.uid == request.auth.uid &&
+             data.content is string && data.content.size() < 5000 &&
+             data.authorName is string && data.authorName.size() < 100;
+    }
+
+    function isValidNotification(data) {
+      return data.keys().hasAll(['uid', 'title', 'message', 'type', 'read', 'createdAt']) &&
+             data.uid is string &&
+             data.title is string && data.title.size() < 200 &&
+             data.message is string && data.message.size() < 1000 &&
+             data.type in ['info', 'success', 'warning', 'error'] &&
+             data.read is bool;
+    }
+
+    function isValidGym(data) {
+      return data.keys().hasAll(['name', 'city', 'address', 'location', 'price', 'rating', 'reviews', 'image', 'tags', 'isPremium']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 200 &&
+             data.city is string && data.city.size() > 0 && data.city.size() < 100 &&
+             data.address is string && data.address.size() < 500 &&
+             data.price is number && data.price >= 0 &&
+             data.rating is number && data.rating >= 0 && data.rating <= 5 &&
+             data.reviews is number && data.reviews >= 0 &&
+             data.image is string &&
+             data.tags is list &&
+             data.isPremium is bool;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{uid} {
+      // Allow reading user profiles for rankings, but in a real app 
+      // you should hide sensitive fields like email.
+      allow read: if isAuthenticated();
+      allow create: if isOwner(uid) && isValidUser(request.resource.data);
+      allow update: if isOwner(uid) && isValidUser(request.resource.data);
+      
+      match /routines/{routineId} {
+        allow read: if isOwner(uid);
+        allow write: if isOwner(uid);
+      }
+    }
+
+    match /activities/{activityId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidActivity(request.resource.data);
+      allow update: if isAuthenticated() && (
+        (request.resource.data.uid == request.auth.uid && isValidActivity(request.resource.data)) ||
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['kudos', 'comments']))
+      );
+      allow delete: if isAuthenticated() && resource.data.uid == request.auth.uid;
+    }
+
+    match /gyms/{gymId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() && isValidGym(request.resource.data);
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && resource.data.uid == request.auth.uid;
+      allow create: if false; // Only system/admin
+      allow update: if isAuthenticated() && resource.data.uid == request.auth.uid && 
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+      allow delete: if isAuthenticated() && resource.data.uid == request.auth.uid;
+    }
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "name": "FitNova",
+  "description": "Elite Performance Fitness App with AI Coaching, Progress Tracking, and Community",
+  "requestFramePermissions": ["geolocation"]
+}
