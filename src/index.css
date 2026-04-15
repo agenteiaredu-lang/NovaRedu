@@ -180,13 +180,3 @@
 .kinetic-gradient {
   background: linear-gradient(45deg, var(--primary-container), var(--primary-fixed-dim));
 }
-
-.leaflet-popup-content-wrapper, .leaflet-popup-tip {
-    background: #d1ff00 !important;
-    color: #000 !important;
-    box-shadow: 0 3px 14px rgba(0,0,0,0.4);
-}
-
-.text-on-surface {
-    color: #000 !important;
-}
